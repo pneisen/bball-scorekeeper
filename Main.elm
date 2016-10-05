@@ -160,6 +160,7 @@ edit id model =
                 )
                 model.players
         , playerName = ""
+        , playerId = Nothing
     }
 
 
@@ -196,18 +197,31 @@ playerListHeader =
 
 playerList : Model -> Html Msg
 playerList model =
-    ul [] (List.map player (List.sortBy .name model.players))
+    ul [] (List.map (player model.playerId) (List.sortBy .name model.players))
 
 
-player : Player -> Html Msg
-player player =
+player : Maybe Int -> Player -> Html Msg
+player playerid player =
     li []
         [ i [ class "edit", onClick (Edit player) ] []
-        , div [] [ text player.name ]
+        , playerName playerid player
         , button [ type' "button", onClick (Score player 2) ] [ text "2 pts" ]
         , button [ type' "button", onClick (Score player 3) ] [ text "3 pts" ]
         , div [] [ text (toString player.points) ]
         ]
+
+
+playerName : Maybe Int -> Player -> Html Msg
+playerName playerid player =
+    case playerid of
+        Just id ->
+            if id == player.id then
+                div [ class "edit" ] [ text player.name ]
+            else
+                div [] [ text player.name ]
+
+        Nothing ->
+            div [] [ text player.name ]
 
 
 pointsTotal : Model -> Html Msg
@@ -225,16 +239,33 @@ pointsTotal model =
 playerForm : Model -> Html Msg
 playerForm model =
     Html.form [ onSubmit Save ]
-        [ input
-            [ type' "text"
-            , placeholder "Add/Edit Player..."
-            , onInput Input
-            , value model.playerName
-            ]
-            []
+        [ playerFormInput model
         , button [ type' "submit" ] [ text "Save" ]
         , button [ type' "button", onClick Cancel ] [ text "Cancel" ]
         ]
+
+
+playerFormInput : Model -> Html Msg
+playerFormInput model =
+    case model.playerId of
+        Just id ->
+            input
+                [ type' "text"
+                , placeholder "Add/Edit Player..."
+                , onInput Input
+                , value model.playerName
+                , class "edit"
+                ]
+                []
+
+        Nothing ->
+            input
+                [ type' "text"
+                , placeholder "Add/Edit Player..."
+                , onInput Input
+                , value model.playerName
+                ]
+                []
 
 
 playsSection : Model -> Html Msg
