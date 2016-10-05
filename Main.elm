@@ -101,8 +101,27 @@ update msg model =
             else
                 save model
 
-        _ ->
-            model
+        Delete play ->
+            { model
+                | plays =
+                    List.filter
+                        (\p ->
+                            if p.id /= play.id then
+                                True
+                            else
+                                False
+                        )
+                        model.plays
+                , players =
+                    List.map
+                        (\player ->
+                            if play.playerId == player.id then
+                                { player | points = player.points - play.points }
+                            else
+                                player
+                        )
+                        model.players
+            }
 
 
 save : Model -> Model
@@ -154,7 +173,7 @@ view model =
         [ h1 [] [ text "Score Keeper" ]
         , playerSection model
         , playerForm model
-        , p [] [ toString model |> text ]
+        , playsSection model
         ]
 
 
@@ -216,6 +235,56 @@ playerForm model =
         , button [ type' "submit" ] [ text "Save" ]
         , button [ type' "button", onClick Cancel ] [ text "Cancel" ]
         ]
+
+
+playsSection : Model -> Html Msg
+playsSection model =
+    div []
+        [ playListHeader
+        , playList model
+        ]
+
+
+playListHeader : Html Msg
+playListHeader =
+    header []
+        [ div [] [ text "Plays" ]
+        , div [] [ text "Points" ]
+        ]
+
+
+playList : Model -> Html Msg
+playList model =
+    model.plays |> List.map (play model) |> ul []
+
+
+play : Model -> Play -> Html Msg
+play model p =
+    let
+        playerMatch =
+            List.filter
+                (\player ->
+                    if player.id == p.playerId then
+                        True
+                    else
+                        False
+                )
+                model.players
+                |> List.head
+
+        playerName =
+            case playerMatch of
+                Just player ->
+                    player.name
+
+                Nothing ->
+                    "Player not found"
+    in
+        li []
+            [ i [ class "remove", onClick (Delete p) ] []
+            , div [] [ text playerName ]
+            , div [] [ text (toString p.points) ]
+            ]
 
 
 
