@@ -247,25 +247,24 @@ playerForm model =
 
 playerFormInput : Model -> Html Msg
 playerFormInput model =
-    case model.playerId of
-        Just id ->
-            input
-                [ type' "text"
-                , placeholder "Add/Edit Player..."
-                , onInput Input
-                , value model.playerName
-                , class "edit"
-                ]
-                []
+    let
+        attribs =
+            [ type' "text"
+            , placeholder "Add/Edit Player..."
+            , onInput Input
+            , value model.playerName
+            ]
+    in
+        case model.playerId of
+            Just id ->
+                input
+                    (class "edit" :: attribs)
+                    []
 
-        Nothing ->
-            input
-                [ type' "text"
-                , placeholder "Add/Edit Player..."
-                , onInput Input
-                , value model.playerName
-                ]
-                []
+            Nothing ->
+                input
+                    attribs
+                    []
 
 
 playsSection : Model -> Html Msg
@@ -286,36 +285,43 @@ playListHeader =
 
 playList : Model -> Html Msg
 playList model =
-    model.plays |> List.map (play model) |> ul []
+    model.plays |> List.map (play model.players) |> ul []
 
 
-play : Model -> Play -> Html Msg
-play model p =
+
+-- This function either returns the player name or "Player not found"
+
+
+lookupPlayerNameById : List Player -> Int -> String
+lookupPlayerNameById players id =
     let
-        playerMatch =
-            List.filter
-                (\player ->
-                    if player.id == p.playerId then
-                        True
-                    else
-                        False
-                )
-                model.players
-                |> List.head
-
-        playerName =
-            case playerMatch of
-                Just player ->
-                    player.name
-
-                Nothing ->
-                    "Player not found"
+        idFilter =
+            (\player ->
+                if player.id == id then
+                    True
+                else
+                    False
+            )
     in
-        li []
-            [ i [ class "remove", onClick (Delete p) ] []
-            , div [] [ text playerName ]
-            , div [] [ text (toString p.points) ]
-            ]
+        List.filter idFilter players
+            |> List.head
+            |> (\h ->
+                    case h of
+                        Just player ->
+                            player.name
+
+                        Nothing ->
+                            "Player not found"
+               )
+
+
+play : List Player -> Play -> Html Msg
+play players p =
+    li []
+        [ i [ class "remove", onClick (Delete p) ] []
+        , div [] [ text (lookupPlayerNameById players p.playerId) ]
+        , div [] [ text (toString p.points) ]
+        ]
 
 
 
